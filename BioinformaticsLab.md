@@ -1,8 +1,7 @@
 Log into the UConn Xanadu Computing Cluster 
 
 ```
-ssh USERNAME@xanadu-submit-ext.cam.uchc.edu
-
+ssh -Y USERNAME@xanadu-submit-ext.cam.uchc.edu
 ```
 
 Make a folder for this lab and then navigate into that folder
@@ -10,7 +9,6 @@ Make a folder for this lab and then navigate into that folder
 ```
 mkdir molsys
 cd molsys
-
 ```
 
 Copy fastq files into the folder you are currently in. We will copy them from Eric's folder beacause he has already changed his poermissions to allow others to access his files.
@@ -95,6 +93,39 @@ We can use a program to get some basic assembly stats. This can be useful compar
 module load quast
 quast.py contigs.fasta
 ```
+
+
+The next part assumes that you have downloaded and copied the BUSCO database into your current directory.  
+
+Make a blast database of your assembled contigs 
+
+```
+makeblastdb -in contigs.fasta -dbtype 'nucl' 
+```
+
+Use tblastn to blast each BUSCO against the assembled contigs database. The format of the output is controlled by the "-outfmt" flag. Use this reference for deciding what you want from the output – http://www.metagenomics.wiki/tools/blast/blastn-output-format-6
+
+```
+module load blast
+tblastn -query ancestral -db contigs.fasta -outfmt "6 qseqid sseqid length evalue bitscore sframe sseq sstart send" -evalue 0.01 -word_size 3 -out blastout.txt
+```
+
+Enter R while in the directory where of blastout.txt. 
+
+```
+module load R/3.4.1
+R
+```
+
+Load in the blast output as a table and turn it into a data.frame (This is a table where each column can be a different data class). Save that into an object called "blast". 
+
+```
+blast <- data.frame(read.table("blastout.txt"))
+```
+
+
+
+
 
 
 
