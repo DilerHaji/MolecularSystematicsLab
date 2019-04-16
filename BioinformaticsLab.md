@@ -11,14 +11,21 @@ mkdir molsys
 cd molsys
 ```
 
-Copy fastq files into the folder you are currently in. We will copy them from Eric's folder beacause he has already changed his poermissions to allow others to access his files.
+Copy fastq files into the folder you are currently in. We will copy them from Eric's folder beacause he has already changed his permissions to allow others to access his files.
 
 ```
 cp WHERE_THE_FILE_IS . 
 ```
 
-The following procedure to assemby is from Eric Gordon's bioinformatics workshop (https://github.com/erg55/Simon-lab-workshop).
+The following procedure to assembly is mostly from Eric Gordon's bioinformatics workshop (https://github.com/erg55/Simon-lab-workshop).
 
+
+The sequence data is split across two lanes. Let's combine each set into the two paired ends reads before assembly:
+
+```
+cat P0075_CS_I27897_S125_L001_R1_001.fastq.gz P0075_CS_I27897_S125_L002_R1_001.fastq.gz > S125_R1.fastq.gz
+cat P0075_CS_I27897_S125_L001_R2_001.fastq.gz P0075_CS_I27897_S125_L002_R2_001.fastq.gz > S125_R2.fastq.gz
+```
 
 Deduplication
 
@@ -94,6 +101,48 @@ module load quast
 quast.py contigs.fasta
 ```
 
+Let's map our original reverse and forward reads back to the assembly to get an idea of the depth per contig 
+
+```
+module load bwa
+bwa index contigs.fasta
+bwa mem -t 2 -k 50 -B 10 -O 10 -T 90 contigs.fasta ../S125_dedup_R1.fastq.gz ../S125_dedup_R2.fastq.gz > bwafile
+```
+
+Convert the resulting file into a BAM file and then use samtools to get the depth per contig 
+
+```
+module load samtools
+samtools view -b -F 4 bwafile > mapped.bam
+samtools sort mapped.bam > mapped.sorted.bam
+samtools depth mapped.sorted.bam > depth.txt
+```
+
+Import the resulting file into R. 
+
+```
+module load R/3.4.1
+R
+depth <- read.table("depth.txt")
+colnames(depth) <- c("contig_name", "depth", "position")
+```
+
+Use the aggregate function to calculate the per-contig mean depth and the contig length
+
+```
+depth_depth <- aggregate(depth$depth, by = list(depth$contig_name), FUN = mean)
+depth_length <- aggregate(depth$length, by = list(depth$contig_name), FUN = max) 
+```
+
+Plot a histogram of the per-contig mean depth and a plot of the relationship between per-contig mean depth and contig length. 
+
+```
+hist(depth_depth$x) 
+hist(depth_depth$x, breaks = 1000, xlim = c(0, 1000))
+
+plot(depth_depth$x, depth_length$x)
+```
+
 
 The next part assumes that you have downloaded and copied the BUSCO database into your current directory.  
 
@@ -122,6 +171,7 @@ Load in the blast output as a table and turn it into a data.frame (This is a tab
 ```
 blast <- data.frame(read.table("blastout.txt"))
 ```
+
 
 
 
