@@ -23,8 +23,8 @@ The following procedure to assembly is mostly from Eric Gordon's bioinformatics 
 The sequence data is split across two lanes. Let's combine each set into the two paired ends reads before assembly:
 
 ```
-cat P0075_CS_I27897_S125_L001_R1_001.fastq.gz P0075_CS_I27897_S125_L002_R1_001.fastq.gz > S125_R1.fastq.gz
-cat P0075_CS_I27897_S125_L001_R2_001.fastq.gz P0075_CS_I27897_S125_L002_R2_001.fastq.gz > S125_R2.fastq.gz
+cat *SAMPLE*L001_R1_001.fastq.gz *SAMPLE*L002_R1_001.fastq.gz > SAMPLE_R1.fastq.gz
+cat *SAMPLE*L001_R2_001.fastq.gz *SAMPLE*L002_R2_001.fastq.gz > SAMPLE_R2.fastq.gz
 ```
 
 Deduplication
@@ -33,7 +33,7 @@ Deduplication makes assembly faster by getting rid of optical or pcr duplicates 
 
 ```
 module load bbmap
-clumpify.sh in1=S125_R1.fastq.gz in2=S125_R2.fastq.gz out1=S125_dedup_R1.fastq.gz out2=S125_dedup_R2.fastq.gz dedupe
+clumpify.sh in1=SAMPLE_R1.fastq.gz in2=SAMPLE_R2.fastq.gz out1=SAMPLE_dedup_R1.fastq.gz out2=SAMPLE_dedup_R2.fastq.gz dedupe
 ```
 
 Trimming
@@ -42,7 +42,7 @@ We will also need to download a file with the sequence of the Illumina adaptor w
 ```
 module load Trimmomatic
 cp ../../egordon/metagenomes/files/TruSeq3-PE.fa .
-trimmomatic-0.36.jar PE -phred33 S125_dedup_R1.fastq.gz S125_dedup_R2.fastq.gz S125_forward_paired.fq.gz S125_forward_unpaired.fq.gz S125_reverse_paired.fq.gz S125_reverse_unpaired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:50;
+trimmomatic-0.36.jar PE -phred33 SAMPLE_dedup_R1.fastq.gz SAMPLE_dedup_R2.fastq.gz SAMPLE_forward_paired.fq.gz SAMPLE_forward_unpaired.fq.gz SAMPLE_reverse_paired.fq.gz SAMPLE_reverse_unpaired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:50;
 ```
 
 Merging paired reads
@@ -50,13 +50,13 @@ This can only occur if the insert size was short enough that the two 150 bp read
 
 ```
 module load bbmap
-bbmerge.sh in1=S125_forward_paired.fq.gz in2=S125_reverse_paired.fq.gz out=S125_merged.fq.gz outu1=S125_unmergedF.fq.gz outu2=S125_unmergedR.fq.gz
+bbmerge.sh in1=SAMPLE_forward_paired.fq.gz in2=SAMPLE_reverse_paired.fq.gz out=SAMPLE_merged.fq.gz outu1=SAMPLE_unmergedF.fq.gz outu2=SAMPLE_unmergedR.fq.gz
 ```
 
 Combine all single read files for assembly:
 
 ```
-cat S125_unmergedF.fq.gz S125_unmergedR.fq.gz S125_forward_unpaired.fq.gz S125_reverse_unpaired.fq.gz > S125_allsinglereadscombined.fq.gz
+cat SAMPLE_unmergedF.fq.gz SAMPLE_unmergedR.fq.gz SAMPLE_forward_unpaired.fq.gz SAMPLE_reverse_unpaired.fq.gz > SAMPLE_allsinglereadscombined.fq.gz
 ```
 
 Run SPAdes assembler
@@ -64,7 +64,7 @@ Run SPAdes assembler
 Let's first just make sure the syntax is right for this to work. Run the command below specifying only one thread under -t:
 
 ```
-/home/CAM/egordon/spades/SPAdes-3.12.0-Linux/bin/spades.py -t 1 --merged S125_merged.fq.gz -s S125_allsinglereadscombined.fq.gz -o S125trimmedspades.assembly/
+/home/CAM/egordon/spades/SPAdes-3.12.0-Linux/bin/spades.py -t 1 --merged SAMPLE_merged.fq.gz -s SAMPLE_allsinglereadscombined.fq.gz -o SAMPLE_trimmedspades.assembly/
 ```
 
 If it looks like it's running correctly, stop it with control+C and lets try and submit it as a job because it may require some time and more memory than available on the head node. Generally you shouldn't run a bunch heavy tasks on this node.
@@ -84,7 +84,7 @@ Make a script like below named spades.sh (make sure to update your email):
 #SBATCH --mail-user=YOUR_UCONN_EMAIL_ADDRESS
 #SBATCH -o myscript_%j.out
 #SBATCH -e myscript_%j.err
-/home/CAM/egordon/spades/SPAdes-3.12.0-Linux/bin/spades.py -t 16 --merged S125_merged.fq.gz -s S125_allsinglereadscombined.fq.gz -o S125trimmedspades.assembly/
+/home/CAM/egordon/spades/SPAdes-3.12.0-Linux/bin/spades.py -t 16 --merged SAMPLE_merged.fq.gz -s SAMPLE_allsinglereadscombined.fq.gz -o SAMPLE_trimmedspades.assembly/
 ```
 
 Submit it:
@@ -106,7 +106,7 @@ Let's map our original reverse and forward reads back to the assembly to get an 
 ```
 module load bwa
 bwa index contigs.fasta
-bwa mem -t 2 -k 50 -B 10 -O 10 -T 90 contigs.fasta ../S125_dedup_R1.fastq.gz ../S125_dedup_R2.fastq.gz > bwafile
+bwa mem -t 2 -k 50 -B 10 -O 10 -T 90 contigs.fasta ../SAMPLE_dedup_R1.fastq.gz ../SAMPLE_dedup_R2.fastq.gz > bwafile
 ```
 
 Convert the resulting file into a BAM file and then use samtools to get the depth per contig 
@@ -155,7 +155,7 @@ Exit R by typing quit(). Use SeqKit to extract all the contigs that you outputed
 
 ```
 module load seqkit/0.10.0
-seqkit grep --pattern-file contig_names.txt YOU_CONTIGS.FASTA_FILE > new_contigs.fasta
+seqkit grep --pattern-file contig_names.txt YOUR_CONTIGS.FASTA_FILE > new_contigs.fasta
 ```
 
 
