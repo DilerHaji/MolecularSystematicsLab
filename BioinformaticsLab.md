@@ -143,6 +143,21 @@ hist(depth_depth$x, breaks = 1000, xlim = c(0, 1000))
 plot(depth_depth$x, depth_length$x)
 ```
 
+Pick a cutoff for filterig your contigs and save the list of contig names in a file within your current directory. 
+
+```
+contig_names <- depth_depth[depth_depth$x > 200, 1]
+write.table(contig_names, "contig_names.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+
+Exit R by typing quit(). Use SeqKit to extract all the contigs that you outputed to your contig_names.txt file. 
+
+```
+module load seqkit/0.10.0
+seqkit grep --pattern-file contig_names.txt YOU_CONTIGS.FASTA_FILE > new_contigs.fasta
+```
+
 
 The next part assumes that you have downloaded and copied the BUSCO database into your current directory.  
 
