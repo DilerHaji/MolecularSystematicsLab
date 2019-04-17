@@ -40,7 +40,7 @@ clumpify.sh in1=SAMPLE_R1.fastq.gz in2=SAMPLE_R2.fastq.gz out1=SAMPLE_dedup_R1.f
 ```
 
 ## Trimming
-### We will also need to download a file with the sequence of the Illumina adaptor we think was used into our working directory. This command tells trimmomatic to remove any sequences matching Illumina adaptors, remove low quality (< 3 quality score) trailing or leading bases, using a sliding window of 4 bases removing windows where the quality score is less than 20 on average and finally discarding any read less than 50 bp long after all trimming.
+We will also need to download a file with the sequence of the Illumina adaptor we think was used into our working directory. This command tells trimmomatic to remove any sequences matching Illumina adaptors, remove low quality (< 3 quality score) trailing or leading bases, using a sliding window of 4 bases removing windows where the quality score is less than 20 on average and finally discarding any read less than 50 bp long after all trimming.
 
 ```
 module load Trimmomatic
