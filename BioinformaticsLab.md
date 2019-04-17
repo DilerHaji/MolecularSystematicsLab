@@ -1,4 +1,4 @@
-## Logging into the cluster 
+### Logging into the cluster 
 
 Log into the UConn Xanadu Computing Cluster. The -Y flag allows you to use a graphical interface on your local computer to visualize outputs in the cluster. 
 
@@ -22,7 +22,7 @@ cp WHERE_THE_FILE_IS .
 ### The following procedure to assembly is mostly from Eric Gordon's bioinformatics workshop (https://github.com/erg55/Simon-lab-workshop).
 
 
-## Copying raw sequence files (.fastq.gz) to the current directory.
+### Copying raw sequence files (.fastq.gz) to the current directory.
 
 The sequence data is split across two lanes. Let's combine each set into the two paired ends reads before assembly:
 
@@ -31,7 +31,7 @@ cat *SAMPLE*L001_R1_001.fastq.gz *SAMPLE*L002_R1_001.fastq.gz > SAMPLE_R1.fastq.
 cat *SAMPLE*L001_R2_001.fastq.gz *SAMPLE*L002_R2_001.fastq.gz > SAMPLE_R2.fastq.gz
 ```
 
-## Deduplication
+### Deduplication
  Deduplication makes assembly faster by getting rid of optical or pcr duplicates which don't contribute to coverage.
 
 ```
@@ -39,7 +39,7 @@ module load bbmap
 clumpify.sh in1=SAMPLE_R1.fastq.gz in2=SAMPLE_R2.fastq.gz out1=SAMPLE_dedup_R1.fastq.gz out2=SAMPLE_dedup_R2.fastq.gz dedupe
 ```
 
-## Trimming
+### Trimming
 We will also need to download a file with the sequence of the Illumina adaptor we think was used into our working directory. This command tells trimmomatic to remove any sequences matching Illumina adaptors, remove low quality (< 3 quality score) trailing or leading bases, using a sliding window of 4 bases removing windows where the quality score is less than 20 on average and finally discarding any read less than 50 bp long after all trimming.
 
 ```
@@ -48,7 +48,7 @@ cp ../../egordon/metagenomes/files/TruSeq3-PE.fa .
 trimmomatic-0.36.jar PE -phred33 SAMPLE_dedup_R1.fastq.gz SAMPLE_dedup_R2.fastq.gz SAMPLE_forward_paired.fq.gz SAMPLE_forward_unpaired.fq.gz SAMPLE_reverse_paired.fq.gz SAMPLE_reverse_unpaired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:50;
 ```
 
-## Merging paired reads
+### Merging paired reads
 This can only occur if the insert size was short enough that the two 150 bp reads on either side overlapped. I have been told merging about half is a good percentage.
 
 ```
@@ -56,14 +56,14 @@ module load bbmap
 bbmerge.sh in1=SAMPLE_forward_paired.fq.gz in2=SAMPLE_reverse_paired.fq.gz out=SAMPLE_merged.fq.gz outu1=SAMPLE_unmergedF.fq.gz outu2=SAMPLE_unmergedR.fq.gz
 ```
 
-## Combine all single read files for assembly:
+### Combine all single read files for assembly:
 These are the reads that could not be merged in the previous step. Even through they couldn't be merged into a longer contiguous sequence, we want to use them in our assembly in order to get the best possible contig set that we can get given our data. 
 
 ```
 cat SAMPLE_unmergedF.fq.gz SAMPLE_unmergedR.fq.gz SAMPLE_forward_unpaired.fq.gz SAMPLE_reverse_unpaired.fq.gz > SAMPLE_allsinglereadscombined.fq.gz
 ```
 
-## Run SPAdes assembler
+### Run SPAdes assembler
 
 Let's first just make sure the syntax is right for this to work. Run the command below specifying only one thread under -t:
 
@@ -97,7 +97,7 @@ Submit it.
 sbatch spades.sh 
 ```
 
-## QUAST
+### QUAST
 
 We can use a program to get some basic assembly stats. This can be useful comparing the effectiveness of various programs or parameters.
 
@@ -105,6 +105,8 @@ We can use a program to get some basic assembly stats. This can be useful compar
 module load quast
 quast.py contigs.fasta
 ```
+
+### Mapping reads to assembled contigs
 
 Let's map our original reverse and forward reads back to the assembly to get an idea of the depth per contig (i.e., how many of the original raw reads map back to each base in each contig. 
 
@@ -114,6 +116,8 @@ bwa index contigs.fasta
 bwa mem -t 2 -k 50 -B 10 -O 10 -T 90 contigs.fasta ../SAMPLE_dedup_R1.fastq.gz ../SAMPLE_dedup_R2.fastq.gz > bwafile
 ```
 
+### Processsing mapping output 
+
 Convert the resulting file into a BAM file and then use samtools to get the depth per contig.  
 
 ```
@@ -122,6 +126,8 @@ samtools view -b -F 4 bwafile > mapped.bam
 samtools sort mapped.bam > mapped.sorted.bam
 samtools depth mapped.sorted.bam > depth.txt
 ```
+
+### Using R for further processing
 
 Import the resulting file into R. 
 
@@ -155,6 +161,7 @@ contig_names <- depth_depth[depth_depth$x > 200, 1]
 write.table(contig_names, "contig_names.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
 ```
 
+### Extracting final contig set 
 
 Exit R by typing quit(). Use SeqKit to extract all the contigs that you outputed to your contig_names.txt file. 
 
@@ -163,7 +170,7 @@ module load seqkit/0.10.0
 seqkit grep --pattern-file contig_names.txt YOUR_CONTIGS.FASTA_FILE > new_contigs.fasta
 ```
 
-## BLAST 
+### BLAST 
 The next part assumes that you have downloaded and copied the BUSCO database into your current directory.  
 
 Make a blast database of your assembled contigs 
