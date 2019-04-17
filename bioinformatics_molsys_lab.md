@@ -171,7 +171,7 @@ seqkit grep --pattern-file contig_names.txt YOUR_CONTIGS.FASTA_FILE > new_contig
 ```
 
 ### BLAST 
-The next part assumes that you have downloaded and copied the BUSCO database into your current directory.  
+The next part assumes that you have downloaded and copied the BUSCO database into your current directory. https://busco.ezlab.org/
 
 Make a blast database of your assembled contigs 
 
