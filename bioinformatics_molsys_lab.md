@@ -142,7 +142,7 @@ Use the aggregate function to calculate the per-contig mean depth and the contig
 
 ```
 depth_depth <- aggregate(depth$depth, by = list(depth$contig_name), FUN = mean)
-depth_length <- aggregate(depth$length, by = list(depth$contig_name), FUN = max) 
+depth_length <- aggregate(depth$position, by = list(depth$contig_name), FUN = max) 
 ```
 
 Plot a histogram of the per-contig mean depth and a plot of the relationship between per-contig mean depth and contig length. 
