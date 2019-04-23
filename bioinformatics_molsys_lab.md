@@ -116,7 +116,7 @@ bwa index contigs.fasta
 bwa mem -t 2 -k 50 -B 10 -O 10 -T 90 contigs.fasta ../SAMPLE_dedup_R1.fastq.gz ../SAMPLE_dedup_R2.fastq.gz > bwafile
 ```
 
-### Processsing mapping output 
+### Processing mapping output 
 
 Convert the resulting file into a BAM file and then use samtools to get the depth per contig.  
 
