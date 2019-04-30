@@ -13,7 +13,7 @@ mkdir molsys
 cd molsys
 ```
 
-Copy fastq files into the folder you are currently in. We will copy them from Eric's folder beacause he has already changed his permissions to allow others to access his files. If you are in your home directory, the path to the folder containing the data in ../egordon/Dropbox/. The "." at the end of the following code tells "cp" to copy the file into the current directory that you are in. 
+Copy fastq files into the folder you are currently in. We will copy them from Eric's folder because he has already changed his permissions to allow others to access his files. If you are in your home directory, the path to the folder containing the data in ../egordon/Dropbox/. The "." at the end of the following code tells "cp" to copy the file into the current directory that you are in. 
 
 ```
 cp WHERE_THE_FILE_IS . 
@@ -32,7 +32,7 @@ cat *SAMPLE*L001_R2_001.fastq.gz *SAMPLE*L002_R2_001.fastq.gz > SAMPLE_R2.fastq.
 ```
 
 ### Deduplication
- Deduplication makes assembly faster by getting rid of optical or pcr duplicates which don't contribute to coverage.
+ Deduplication makes assembly faster by getting rid of optical or PCR duplicates which don't contribute to coverage.
 
 ```
 module load bbmap
@@ -71,7 +71,7 @@ Let's first just make sure the syntax is right for this to work. Run the command
 /home/CAM/egordon/spades/SPAdes-3.12.0-Linux/bin/spades.py -t 1 --merged SAMPLE_merged.fq.gz -s SAMPLE_allsinglereadscombined.fq.gz -o SAMPLE_trimmedspades.assembly/
 ```
 
-If it looks like it's running correctly, stop it with control+C and lets try and submit it as a job because it may require some time and more memory than available on the head node. Generally you shouldn't run a bunch heavy tasks on this node.
+If it looks like it's running correctly, stop it with control+C and let’s try and submit it as a job because it may require some time and more memory than available on the head node. Generally, you shouldn't run a bunch heavy tasks on this node.
 
 Make a script like below named spades.sh (make sure to update your email). You can open an editable txt editor within your terminal window and copy the below text into a file named spades.sh by typing "nano spades.sh."
 
@@ -154,7 +154,7 @@ hist(depth_depth$x, breaks = 1000, xlim = c(0, 1000))
 plot(depth_depth$x, depth_length$x)
 ```
 
-Pick a cutoff for filterig your contigs and save the list of contig names in a file within your current directory. 
+Pick a cutoff for filtering your contigs and save the list of contig names in a file within your current directory. 
 
 ```
 contig_names <- depth_depth[depth_depth$x > 200, 1]
@@ -163,7 +163,7 @@ write.table(contig_names, "contig_names.txt", quote = FALSE, row.names = FALSE, 
 
 ### Extracting final contig set 
 
-Exit R by typing quit(). Use SeqKit to extract all the contigs that you outputed to your contig_names.txt file. 
+Exit R by typing quit(). Use SeqKit to extract all the contigs that you output to your contig_names.txt file. 
 
 ```
 module load seqkit/0.10.0
@@ -200,9 +200,9 @@ blast <- data.frame(read.table("blastout.txt"))
 colnames(blast) <- colnames("COLUMN NAME 1 FOR COLUMN 1", "COLUMN NAME 2 FOR COLUMN 2", ...,) 
 ```
 
-Since we blasted our BUSCOs aagainst our contigs, our input will have a contig match or a set of contig matches (e.g., NODE_512_length_554_cov_2.777778) for each BUSCO (e.g., EOG090W004L). If you outputed "sseq" or "qseq", you will have an amino acid sequence for the subject (i.e., the contig sequence) and the query (i.e., the BUSCO sequence), respectively. The "sstart" and the "send" output columns will have the positions of the start and end, respectively, of the amino acid sequence in terms of the original nucleotide sequence of the contig that was translated. 
+Since we blasted our BUSCOs against our contigs, our input will have a contig match or a set of contig matches (e.g., NODE_512_length_554_cov_2.777778) for each BUSCO (e.g., EOG090W004L). If you outputed "sseq" or "qseq", you will have an amino acid sequence for the subject (i.e., the contig sequence) and the query (i.e., the BUSCO sequence), respectively. The "sstart" and the "send" output columns will have the positions of the start and end, respectively, of the amino acid sequence in terms of the original nucleotide sequence of the contig that was translated. 
 
-The first thing we need to do is pick a single contig match for each BUSCO and store the list of all BUSCOs with their best contig match into a list object. We will do this using a "for loop". These can be very slow, but they are the most intuitive way of automating tasks. Below, we first make a list of all the unique BUSCO names in our blast output table. This will allow us to loop over each name sequentialy. Then, we make a blank list called "top_hits" where we will store the results of our loop over all the unique BUSCO names. Within the loop, we are saving a temporary object called "x" with only the subset of the entire blast output table that corresponds to the ith unique BUSCO. We pick from that new table "x" the row that corresponds to the minimum E-value in the E-value column, saving that row into a temporary object named "y". Finally, we put "y" into a slot within our "top_hits" list – this slot will be named with the value of i, which is the name of the unique BUSCO. 
+The first thing we need to do is pick a single contig match for each BUSCO and store the list of all BUSCOs with their best contig match into a list object. We will do this using a "for loop". These can be very slow, but they are the most intuitive way of automating tasks. Below, we first make a list of all the unique BUSCO names in our blast output table. This will allow us to loop over each name sequentially. Then, we make a blank list called "top_hits" where we will store the results of our loop over all the unique BUSCO names. Within the loop, we are saving a temporary object called "x" with only the subset of the entire blast output table that corresponds to the ith unique BUSCO. We pick from that new table "x" the row that corresponds to the minimum E-value in the E-value column, saving that row into a temporary object named "y". Finally, we put "y" into a slot within our "top_hits" list – this slot will be named with the value of i, which is the name of the unique BUSCO. 
 
 ```
 unique_buscos <- unique(blast$V1)
@@ -217,9 +217,9 @@ for(i in unique_buscos) {
 
 ```
 
-Note that the above method is not ideal because our data is genomic (as apposed to RNA data) and our our assembly is highly fragmented (too many contigs). This means that for a given BUSCO, the matching sequence in our contig set will sometimes and likely most of the time be spread across different contigs because of introns that span between exons. This can be done in a more complicated way, but for the sake of simplicity, we are considering only one contig per BUSCO.
+Note that the above method is not ideal because our data is genomic (as opposed to RNA data) and our assembly is highly fragmented (too many contigs). This means that for a given BUSCO, the matching sequence in our contig set will sometimes and likely most of the time be spread across different contigs because of introns that span between exons. This can be done in a more complicated way, but for the sake of simplicity, we are considering only one contig per BUSCO.
 
-Now we will interface with BASH through R to accomplish two steps that we will automate across all of our BUSCOs and their corresponding contig matches – we will extract the contig sequence corresponding to each BUSCO and then subset out only the nucleotide sequence within that contig that corresponds what matched the BUSCO in the BLAST search. This can easily be done with a for loop as above, but I will do this using functions and the "apply" set of commands to demonstrate their use. While it doesn't really matter in this case, using functions and apply-like commands in R can make tasks alot faster and more compact. 
+Now we will interface with BASH through R to accomplish two steps that we will automate across all of our BUSCOs and their corresponding contig matches – we will extract the contig sequence corresponding to each BUSCO and then subset out only the nucleotide sequence within that contig that corresponds what matched the BUSCO in the BLAST search. This can easily be done with a for loop as above, but I will do these using functions and the "apply" set of commands to demonstrate their use. While it doesn't really matter in this case, using functions and apply-like commands in R can make tasks a lot faster and more compact. 
 
 Let's create our function first. 
 
@@ -240,9 +240,9 @@ lapply(top_hit, FUN = subseq)
 
 Now get out of R and ls everything in your current directory (the directory that you were working in when you started R). You should see now that there are a bunch of new files, each one containing within it the contig sequence that matched the BUSCO sequence in our BLAST search. But, this is for just one sample. 
 
-We will need to get the contigs.fasta assembly files and blast output files for more samples to build a phylogeny. So everyone in the class should send thier contigs.fasta file and blast output file to everyone else so that each person has a full dataset. 
+We will need to get the contigs.fasta assembly files and blast output files for more samples to build a phylogeny. So everyone in the class should send their contigs.fasta file and blast output file to everyone else so that each person has a full dataset. 
 
-Next, we will make an R script to do everything we did in R on each one of the samples and save the many output files into a folder corresponding to a each sample. Make a script names "blastparseR.r" and put the following code into it (modify as needed) 
+Next, we will make an R script to do everything we did in R on each one of the samples and save the many output files into a folder corresponding to each sample. Make a script names "blastparseR.r" and put the following code into it (modify as needed) 
 
 ```
 blast <- data.frame(read.table("blastout.txt"))
@@ -267,7 +267,7 @@ subseq <- function(x){
 lapply(top_hit, FUN = subseq)
 ```
 
-Now make a BASH job submission script names "Rsubmit.sh" to execute this R script for every sample within each sample folder. Here, I am making a folder that will take the name of the sample taken from "array". I'm moving both the contigs and blastoutput files into this folder, changing my directory so that I'm in the folder, and then changing the name of the blastouput file to read "blastout.txt" to the file name I gave "read.table" in the first line of my R script. Then, I run the blastparsR.r script. After that's done, I use the command "sed" to replace the headers of the sequences in all of the fasta files I just made to the name of the sample the loop is currently on. This allows me to keep track of which samples the sequences came from (remember that the BUSCO information is stored in the file name itself. The "sed" commnd uses flags -i and -e so that the it can replace header names for all files in the current directory. The complicated stuff in between ' ' is called a regular expression and it tells "sed" to look for ">the-sequence-name" and replace it with ">the-name-of-the-sample".  
+Now make a BASH job submission script names "Rsubmit.sh" to execute this R script for every sample within each sample folder. Here, I am making a folder that will take the name of the sample taken from "array". I'm moving both the contigs and blastoutput files into this folder, changing my directory so that I'm in the folder, and then changing the name of the blastouput file to read "blastout.txt" to the file name I gave "read.table" in the first line of my R script. Then, I run the blastparsR.r script. After that's done, I use the command "sed" to replace the headers of the sequences in all of the fasta files I just made to the name of the sample the loop is currently on. This allows me to keep track of which samples the sequences came from (remember that the BUSCO information is stored in the file name itself. The "sed" command uses flags -i and -e so that the it can replace header names for all files in the current directory. The complicated stuff in between ' ' is called a regular expression and it tells "sed" to look for ">the-sequence-name" and replace it with ">the-name-of-the-sample".  
 
 ```
 #!/bin/bash
