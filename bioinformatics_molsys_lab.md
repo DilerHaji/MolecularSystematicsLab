@@ -267,7 +267,7 @@ subseq <- function(x){
 lapply(top_hit, FUN = subseq)
 ```
 
-Now make a BASH job submission script names "Rsubmit.sh" to execute this R script for every sample within each sample folder. Here, I am making a folder that will take the name of the sample taken from "array". I'm moving both the contigs and blastoutput files into this folder, changing my directory so that I'm in the folder, and then changing the name of the blastouput file to read "blastout.txt" to the file name I gave "read.table" in the first line of my R script. 
+Now make a BASH job submission script names "Rsubmit.sh" to execute this R script for every sample within each sample folder. Here, I am making a folder that will take the name of the sample taken from "array". I'm moving both the contigs and blastoutput files into this folder, changing my directory so that I'm in the folder, and then changing the name of the blastouput file to read "blastout.txt" to the file name I gave "read.table" in the first line of my R script. Then, I run the blastparsR.r script. After that's done, I use the command "sed" to replace the headers of the sequences in all of the fasta files I just made to the name of the sample the loop is currently on. This allows me to keep track of which samples the sequences came from (remember that the BUSCO information is stored in the file name itself. The "sed" commnd uses flags -i and -e so that the it can replace header names for all files in the current directory. The complicated stuff in between ' ' is called a regular expression and it tells "sed" to look for ">the-sequence-name" and replace it with ">the-name-of-the-sample".  
 
 ```
 #!/bin/bash
@@ -298,10 +298,11 @@ mv ${a}_blastout.txt ${a}
 cd ${a}
 mv ${a}_blastout.txt blastout.txt
 Rscript blastparseR.r
+sed -i -e 's/>.*/>${a}/' 
 done
 ```
 
-Now 
+Now we need to concatenate 
 
 
 
