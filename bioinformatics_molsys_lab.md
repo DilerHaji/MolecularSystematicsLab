@@ -193,14 +193,29 @@ module load R/3.4.1
 R
 ```
 
-Load in the blast output as a table and turn it into a data.frame (This is a table where each column can be a different data class). Save that into an object called "blast". 
+Load in the blast output as a table and turn it into a data.frame (This is a table where each column can be a different data class). Save that into an object called "blast". Rename the columns according to the output format you specified when you used tblastn above.
 
 ```
 blast <- data.frame(read.table("blastout.txt"))
+colnames(blast) <- colnames("COLUMN NAME 1 FOR COLUMN 1", "COLUMN NAME 2 FOR COLUMN 2", ...,) 
 ```
 
+Since we blasted our BUSCOs aagainst our contigs, our input will have a contig match or a set of contig matches (e.g., NODE_512_length_554_cov_2.777778) for each BUSCO (e.g., EOG090W004L). If you outputed "sseq" or "qseq", you will have an amino acid sequence for the subject (i.e., the contig sequence) and the query (i.e., the BUSCO sequence), respectively. The "sstart" and the "send" output columns will have the positions of the start and end, respectively, of the amino acid sequence in terms of the original nucleotide sequence of the contig that was translated. 
 
+The first thing we need to do is pick a single contig match for each BUSCO and store the list of all BUSCOs with their best contig match into a list object. We will do this using a "for loop". These can be very slow, but they are the most intuitive way of automating tasks. Below, we first make a list of all the unique BUSCO names in our blast output table. This will allow us to loop over each name sequentialy. Then, we make a blank list called "top_hits" where we will store the results of out loop over all the unique BUSCO names. Within the loop, we are saving a temporary object called "x" with just the subset of the entire blast output table that corresponds to the unique ith unique BUSCO. We pick from that new table "x" the row that corresponds to the minimum E-value in the E-value column, saving that row into a temporary object names "y". Finally, we put "y" into a slot within out "top_hits" list – this slot will be named with the value of i, which is the name of the unique BUSCO. 
 
+```
+unique_buscos <- unique(blast$V1)
+
+top_hits <- list()
+
+for(i in unique_buscos) {
+	x <- blast[blast$V1 == i,]
+	y <- x[x$V4 == min(x$V4),]
+	top_hits[[i]] <- y
+}
+
+```
 
 
 
