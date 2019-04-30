@@ -202,7 +202,7 @@ colnames(blast) <- colnames("COLUMN NAME 1 FOR COLUMN 1", "COLUMN NAME 2 FOR COL
 
 Since we blasted our BUSCOs aagainst our contigs, our input will have a contig match or a set of contig matches (e.g., NODE_512_length_554_cov_2.777778) for each BUSCO (e.g., EOG090W004L). If you outputed "sseq" or "qseq", you will have an amino acid sequence for the subject (i.e., the contig sequence) and the query (i.e., the BUSCO sequence), respectively. The "sstart" and the "send" output columns will have the positions of the start and end, respectively, of the amino acid sequence in terms of the original nucleotide sequence of the contig that was translated. 
 
-The first thing we need to do is pick a single contig match for each BUSCO and store the list of all BUSCOs with their best contig match into a list object. We will do this using a "for loop". These can be very slow, but they are the most intuitive way of automating tasks. Below, we first make a list of all the unique BUSCO names in our blast output table. This will allow us to loop over each name sequentialy. Then, we make a blank list called "top_hits" where we will store the results of out loop over all the unique BUSCO names. Within the loop, we are saving a temporary object called "x" with just the subset of the entire blast output table that corresponds to the unique ith unique BUSCO. We pick from that new table "x" the row that corresponds to the minimum E-value in the E-value column, saving that row into a temporary object names "y". Finally, we put "y" into a slot within out "top_hits" list – this slot will be named with the value of i, which is the name of the unique BUSCO. 
+The first thing we need to do is pick a single contig match for each BUSCO and store the list of all BUSCOs with their best contig match into a list object. We will do this using a "for loop". These can be very slow, but they are the most intuitive way of automating tasks. Below, we first make a list of all the unique BUSCO names in our blast output table. This will allow us to loop over each name sequentialy. Then, we make a blank list called "top_hits" where we will store the results of our loop over all the unique BUSCO names. Within the loop, we are saving a temporary object called "x" with only the subset of the entire blast output table that corresponds to the ith unique BUSCO. We pick from that new table "x" the row that corresponds to the minimum E-value in the E-value column, saving that row into a temporary object named "y". Finally, we put "y" into a slot within our "top_hits" list – this slot will be named with the value of i, which is the name of the unique BUSCO. 
 
 ```
 unique_buscos <- unique(blast$V1)
@@ -216,6 +216,28 @@ for(i in unique_buscos) {
 }
 
 ```
+
+Note that the above method is not ideal because our data is genomic (as apposed to RNA data) and our our assembly is highly fragmented (too many contigs). This means that for a given BUSCO, the matching sequence in our contig set will sometimes and likely most of the time be spread across different contigs because of introns that span between exons. This can be done in a more complicated way, but for the sake of simplicity, we are considering only one contig per BUSCO.
+
+Now we will interface with BASH through R to accomplish two steps that we will automate across all of our BUSCOs and their corresponding contig matches – we will extract the contig sequence corresponding to each BUSCO and then subset out only the nucleotide sequence within that contig that corresponds what matched the BUSCO in the BLAST search. This can easily be done with a for loop as above, but I will do this using functions and the "apply" set of functions to demonstrate their use. While in this case it doesn't really matter, using functions and apply-like commands in R can make tasks alot faster and more compact. 
+
+Let's create our function first. 
+
+```
+subseq <- function(x){
+	name <- paste(x[,1], x[,2], sep = "_")
+	seq_range <- c(x[,10], x[,11])
+	command <- paste("module load seqkit;", " seqkit grep --by-name -p ", x[,2], " contigs.fasta ", "| seqkit subseq -r ", min(seq_range), ":" , max(seq_range), " > ", name, sep="")
+	system(command)
+	}
+```
+
+Then, we will use lapply (list apply) to apply our function to each slot in the list. 
+
+```
+lapply(top_hit, FUN = subseq)
+```
+
 
 
 
