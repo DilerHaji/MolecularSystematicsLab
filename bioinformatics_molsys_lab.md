@@ -219,7 +219,7 @@ for(i in unique_buscos) {
 
 Note that the above method is not ideal because our data is genomic (as apposed to RNA data) and our our assembly is highly fragmented (too many contigs). This means that for a given BUSCO, the matching sequence in our contig set will sometimes and likely most of the time be spread across different contigs because of introns that span between exons. This can be done in a more complicated way, but for the sake of simplicity, we are considering only one contig per BUSCO.
 
-Now we will interface with BASH through R to accomplish two steps that we will automate across all of our BUSCOs and their corresponding contig matches – we will extract the contig sequence corresponding to each BUSCO and then subset out only the nucleotide sequence within that contig that corresponds what matched the BUSCO in the BLAST search. This can easily be done with a for loop as above, but I will do this using functions and the "apply" set of functions to demonstrate their use. While in this case it doesn't really matter, using functions and apply-like commands in R can make tasks alot faster and more compact. 
+Now we will interface with BASH through R to accomplish two steps that we will automate across all of our BUSCOs and their corresponding contig matches – we will extract the contig sequence corresponding to each BUSCO and then subset out only the nucleotide sequence within that contig that corresponds what matched the BUSCO in the BLAST search. This can easily be done with a for loop as above, but I will do this using functions and the "apply" set of commands to demonstrate their use. While it doesn't really matter in this case, using functions and apply-like commands in R can make tasks alot faster and more compact. 
 
 Let's create our function first. 
 
@@ -238,7 +238,70 @@ Then, we will use lapply (list apply) to apply our function to each slot in the 
 lapply(top_hit, FUN = subseq)
 ```
 
+Now get out of R and ls everything in your current directory (the directory that you were working in when you started R). You should see now that there are a bunch of new files, each one containing within it the contig sequence that matched the BUSCO sequence in our BLAST search. But, this is for just one sample. 
 
+We will need to get the contigs.fasta assembly files and blast output files for more samples to build a phylogeny. So everyone in the class should send thier contigs.fasta file and blast output file to everyone else so that each person has a full dataset. 
+
+Next, we will make an R script to do everything we did in R on each one of the samples and save the many output files into a folder corresponding to a each sample. Make a script names "blastparseR.r" and put the following code into it (modify as needed) 
+
+```
+blast <- data.frame(read.table("blastout.txt"))
+
+unique_buscos <- unique(blast$V1)
+
+top_hits <- list()
+
+for(i in unique_buscos) {
+	x <- blast[blast$V1 == i,]
+	y <- x[x$V4 == min(x$V4),]
+	top_hits[[i]] <- y
+}
+
+subseq <- function(x){
+	name <- paste(x[,1], x[,2], sep = "_")
+	seq_range <- c(x[,10], x[,11])
+	command <- paste("module load seqkit;", " seqkit grep --by-name -p ", x[,2], " contigs.fasta ", "| seqkit subseq -r ", min(seq_range), ":" , max(seq_range), " > ", name, sep="")
+	system(command)
+	}
+
+lapply(top_hit, FUN = subseq)
+```
+
+Now make a BASH job submission script names "Rsubmit.sh" to execute this R script for every sample within each sample folder. Here, I am making a folder that will take the name of the sample taken from "array". I'm moving both the contigs and blastoutput files into this folder, changing my directory so that I'm in the folder, and then changing the name of the blastouput file to read "blastout.txt" to the file name I gave "read.table" in the first line of my R script. 
+
+```
+#!/bin/bash
+#SBATCH --job-name=blastparseR
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 1
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mail-type=END
+#SBATCH --mem=5G
+#SBATCH --mail-user=YOUR-EMAIL-ADDRESS
+#SBATCH -o blastparseR_%j.out
+#SBATCH -e blastparseR_%j.err
+
+module load R
+
+array=(SAMPLE-NAME1 SAMPLE-NAME2 SAMPLE-NAME3 etc)
+
+cd .
+
+for a in "${array[@]}";
+do
+cd /home/CAM/dhaji/molsys/
+mkdir ${a}
+mv ${a}_contigs.fasta ${a}
+mv ${a}_blastout.txt ${a}
+cd ${a}
+mv ${a}_blastout.txt blastout.txt
+Rscript blastparseR.r
+done
+```
+
+Now 
 
 
 
