@@ -287,7 +287,7 @@ module load R
 
 array=(SAMPLE-NAME1 SAMPLE-NAME2 SAMPLE-NAME3 etc)
 
-cd .
+cd /home/CAM/dhaji/molsys/
 
 for a in "${array[@]}";
 do
@@ -302,9 +302,16 @@ sed -i -e 's/>.*/>${a}/'
 done
 ```
 
-Now we need to concatenate 
+Now we need to concatenate stuff – we want a single file for each BUSCO with each sequence in the file corresponding to a contig sequence from an assembly of each one of the samples.  
 
+```
+array=(BUSCO-NAME1 BUSCO-NAME2 BUSCO-NAME3 etc)
 
+for a in "${array[@]}";
+do
+cat */${a}* > ${a}-all.fasta
+done
+```
 
 
 
